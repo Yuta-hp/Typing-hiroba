@@ -403,7 +403,7 @@ let keynames = [
 	["q","w","e","r","t","y","u","i","o","p"],
 	["a","s","d","f","g","h","j","k","l"],
 	["z","x","c","v","b","n","m"],
-]
+];
 
 let frame = 0;
 let key = "";
@@ -458,98 +458,138 @@ function G_Init() {
     requestAnimationFrame(G_Loop);
 }
 
-function ConReset(con) {
-    con.fillStyle = "";
-    con.strokeStyle = "";
-    con.lineWidth = "";
-    con.font = "";
+function DrawBack() {
+    vcon.fillStyle = "#76c8f1";
+    vcon.fillRect(0, 0, VS_W, VS_H);
+}
+
+function DrawText(textAlign, font, color, str, x, y) {
+    vcon.textAlign = textAlign;
+    vcon.font = font;
+    vcon.fillStyle = color;
+
+	let text = vcon.measureText(str);
+    vcon.fillText(str,x,y,text.width);
+	return text;
+}
+
+function DrawRect(x,y,w,h,color) {
+	vcon.fillStyle = color;
+	vcon.fillRect(x,y,w,h);
+}
+
+function isInputKey(x, y) {
+	if(key.toLocaleLowerCase() === keynames[y][x]) {
+		return ["bold 15px sans-serif", "#ff5"];
+	}else{
+		return ["normal 15px sans-serif", "#eee"];
+	}
+}
+
+function DrawKeyboardLine(len, addX, line) {
+	for(let x = 0; x < len; x++) {
+		DrawRect(addX + x * 32,175 + 32 * line,30,30, "#252526");
+
+		let font = isInputKey(x,line);
+
+		DrawText("center", font[0], font[1], keynames[line][x], addX + x * 32 + 15,175 + 32 * line + 18)
+	}
+}
+
+function DrawKeyboard() {
+	DrawRect(25, 170, 360, 150, "#939494");
+
+	DrawText("left", "normal 15px sans-serif", "#eee", "'d'で戻る", 100, 50);
+
+	DrawKeyboardLine(11,30,0);
+	DrawKeyboardLine(10,40,1);
+	DrawKeyboardLine(9,50,2);
+	DrawKeyboardLine(7,62,3);
+}
+
+function nowQuestion() {
+	return  GameSystemData.Questions[q_index];
+}
+
+function isEscEnd() {
+	DrawText("left", "normal 15px sans-serif", "#eee", "'esc'で終了", 100, 30)
+	if(isEscKey){
+		changeScene(SCENE_00_TITLE);
+		return true;
+	}
+
+	return false;
+}
+
+function isKeyAsText(text) {
+	return input.value === text;
+}
+
+function resetInput() {
+	input.value = "";
+}
+
+function changeScene(num) {
+	scene = num;
+	NextSceneFrame = frame;
 }
 
 function G_Title_Draw() {
     q_index = 0;
 
-    vcon.fillStyle = "#76c8f1";
-    vcon.fillRect(0, 0, VS_W, VS_H);
+	DrawBack();
 
-    vcon.textAlign = "center";
-    vcon.font = "bold 40px sans-serif";
-    vcon.fillStyle = "#7548ef";
+	DrawText("center", "bold 40px sans-serif", "#7548ef", "タイピング 広場", VS_W/2,100 + 120 + Math.sin((frame - 50) / 10) * 7)
 
-    let text = vcon.measureText("タイピング 広場");
-    vcon.fillText("タイピング 広場",VS_W/2,100 + 120 + Math.sin((frame - 50) / 10) * 7,text.width)
+	DrawText("center", "bold 40px sans-serif", "#272727", "スペースキーを押してください", VS_W/2,VS_H/2 + 120 + Math.sin(frame / 10) * 10);
 
-    vcon.textAlign = "center";
-    vcon.font = "bold 40px sans-serif";
-    vcon.fillStyle = "#272727";
+    if(isKeyAsText(" ")) resetInput(), changeScene(SCENE_01_MENU);
 
-    text = vcon.measureText("スペースキーを押してください");
-    vcon.fillText("スペースキーを押してください",VS_W/2,VS_H/2 + 120 + Math.sin(frame / 10) * 10,text.width)
-
-    if(input.value === " ") input.value = "", scene++;
-
-    input.value = ""
-
-    ConReset(vcon);
+	resetInput();
 }
 
 function G_Menu_Draw() {
     q_index = 0;
 
-    vcon.fillStyle = "#76c8f1";
-    vcon.fillRect(0, 0, VS_W, VS_H);
+	DrawBack();
 
-    vcon.textAlign = "left";
-    vcon.font = "bold 28px sans-serif";
-    vcon.fillStyle = "#272727";
+    if(isKeyAsText("w") && menu_index !== 0) resetInput(), menu_index--;
+    if(isKeyAsText("s") && menu_index !== 2) resetInput(), menu_index++;
 
-    if(input.value === "w" && menu_index !== 0) input.value = "", menu_index--;
-    if(input.value === "s" && menu_index !== 2) input.value = "", menu_index++;
-
-	if(menu_index === GAMEMODE_00_ROME && input.value === "\n") {
-		input.value = "";
-		scene = SCENE_02_GAME;
+	if(menu_index === GAMEMODE_00_ROME && isKeyAsText("\n")) {
+		resetInput();
+		changeScene(SCENE_02_GAME);
 		GameMode = GAMEMODE_00_ROME;
 		return;
 	}
 
-	if(menu_index === GAMEMODE_01_KANA && input.value === "\n") {
-		input.value = "";
-		scene = SCENE_02_GAME;
+	if(menu_index === GAMEMODE_01_KANA && isKeyAsText("\n")) {
+		resetInput();
+		changeScene(SCENE_02_GAME);
 		GameMode = GAMEMODE_01_KANA;
 		return;
 	}
 
-	if(menu_index === GAMEMODE_02_KEY && input.value === "\n") {
-		input.value = "";
-		scene = SCENE_03_KEYSELECT;
+	if(menu_index === GAMEMODE_02_KEY && isKeyAsText("\n")) {
+		resetInput();
+		changeScene(SCENE_03_KEYSELECT);
 		GameMode = GAMEMODE_02_KEY;
-		NextSceneFrame = frame;
 		return;
 	}
 
-    input.value = ""
+	resetInput();
 
-    let text = vcon.measureText("ローマ字モード");
-    vcon.fillText("ローマ字モード",130,170 + Math.cos(frame / 10) * 2,text.width)
+	DrawText("left", "bold 28px sans-serif", "#272727", "ローマ字モード", 130,170 + Math.cos(frame / 10) * 2);
+	DrawText("left", "bold 28px sans-serif", "#272727", "かなモード", 130,220 + Math.cos(frame / 10) * 2);
+	DrawText("left", "bold 28px sans-serif", "#272727", "キーの場所", 130,270 + Math.cos(frame / 10) * 2);
 
-	text = vcon.measureText("かなモード");
-    vcon.fillText("かなモード",130,220 + Math.cos(frame / 10) * 2,text.width)
+	DrawText("left", "bold 28px sans-serif", "#272727", ">", 100 + Math.sin(frame / 10) * 8,170 + menu_index * 50 + Math.cos(frame / 10) * 2);
 
-	text = vcon.measureText("キーの場所");
-    vcon.fillText("キーの場所",130,270 + Math.cos(frame / 10) * 2,text.width)
-
-	text = vcon.measureText(">");
-	vcon.fillText(">",100 + Math.sin(frame / 10) * 8,170 + menu_index * 50 + Math.cos(frame / 10) * 2,text.width)
-
-	text = vcon.measureText("'W'で↑、'S'で↓、'エンター'で決定");
-    vcon.fillText("'W'で↑、'S'で↓、エンターで決定",130,100 + Math.cos(frame / 10) * 2,text.width)
-
-    ConReset(vcon);
+	DrawText("left", "bold 28px sans-serif", "#272727", "'W'で↑、'S'で↓、'エンター'で決定", 130,100 + Math.cos(frame / 10) * 2);
 }
 
 function G_Game_Draw(){
-    vcon.fillStyle = "#76c8f1";
-    vcon.fillRect(0, 0, VS_W, VS_H);
+	DrawBack();
 
     vcon.textAlign = "left";
     vcon.font = "bold 40px sans-serif";
@@ -557,54 +597,38 @@ function G_Game_Draw(){
 
 	if(GameMode === GAMEMODE_00_ROME) {
 		if(GameSystemData.Questions[q_index][1] === input.value){
-			input.value = "";
+			resetInput();
 			q_index++;
 			if(q_index === GameSystemData.Questions.length) {
 				alert("終了しました");
-				scene = SCENE_00_TITLE;
+				changeScene(SCENE_00_TITLE);
 				return;
 			}
 		}
 
-		vcon.font = "normal 15px sans-serif";
-		vcon.fillStyle = "#eee";
-		let text = con.measureText("'esc'で終了         ");
-		vcon.fillText("'esc'で終了",100,30,text.width);
+		if(isEscEnd()) return;
 
-		vcon.fillStyle = "#272727";
-		vcon.font = "bold 40px  sans-serif";
+		DrawText("left", "bold 40px  sans-serif", "#272727", nowQuestion()[0], 100, 80);
 
-		text = vcon.measureText(GameSystemData.Questions[q_index][0]);
-		vcon.fillText(GameSystemData.Questions[q_index][0],100,80,text.width)
-		ConReset(vcon);
-		let rometext = GameSystemData.Questions[q_index][1].split("");
+		let rometext = nowQuestion()[1].split("");
 		let inputtext = input.value.split("");
 		let romewidth = 0;
 
 		for(let i = 0; i < rometext.length; i++)
 		{
+			let color = "";
 			if(inputtext.length > i && inputtext[i] === rometext[i]){
-				vcon.fillStyle = "#16a";
+				color = "#16a";
 			}else if(inputtext.length > i){
-				vcon.fillStyle = "#a16";
+				color = "#a16";
 			}else{
-				vcon.fillStyle = "#272727";
+				color = "#272727";
 			}
 
-			text = vcon.measureText(rometext[i]);
-			vcon.fillText(rometext[i],romewidth + 100,40+80,text.width)
-			ConReset(vcon);
-			romewidth += text.width;
+			romewidth += DrawText("left", "bold 40px  sans-serif", color, rometext[i], romewidth + 100, 120).width;
 		}
 
-		vcon.fillStyle = "#272727";
-		text = vcon.measureText(input.value);
-		vcon.fillText(input.value,100,130+80,text.width)
-		ConReset(vcon);
-
-		if(isEscKey){
-			scene = SCENE_00_TITLE;
-		}
+		DrawText("left", "bold 40px  sans-serif", "#272727", input.value, 100,360);
 	}else if(GameMode === GAMEMODE_01_KANA){
 		if(GameSystemData.Questions[q_index][0] + "\n" === input.value && isEnterKey){
 			input.value = "";
@@ -616,13 +640,9 @@ function G_Game_Draw(){
 			}
 		}
 
-		vcon.font = "normal 15px sans-serif";
-		vcon.fillStyle = "#eee";
-		let text = con.measureText("'esc'で終了         ");
-		vcon.fillText("'esc'で終了",100,30,text.width);
+		if(isEscEnd()) return;
 
-		text = vcon.measureText(GameSystemData.Questions[q_index][1]);
-		vcon.fillText(GameSystemData.Questions[q_index][1],100,120,text.width)
+		DrawText("left", "bold 40px  sans-serif", "#272727", nowQuestion()[1], 100, 120);
 
 		let kanatext = GameSystemData.Questions[q_index][0].split("");
 		let inputtext = input.value.split("");
@@ -630,28 +650,20 @@ function G_Game_Draw(){
 
 		for(let i = 0; i < kanatext.length; i++)
 		{
+			let color;
+
 			if(inputtext.length > i && inputtext[i] === kanatext[i]){
-				vcon.fillStyle = "#16a";
+				color = "#16a";
 			}else if(inputtext.length > i){
-				vcon.fillStyle = "#a16";
+				color = "#a16";
 			}else{
-				vcon.fillStyle = "#272727";
+				color = "#272727";
 			}
 
-			text = vcon.measureText(kanatext[i]);
-			vcon.fillText(kanatext[i],kanawidth + 100,80,text.width)
-			ConReset(vcon);
-			kanawidth += text.width;
+			kanawidth += DrawText("left", "bold 40px  sans-serif", color, kanatext[i], kanawidth + 100, 80).width;
 		}
 
-		vcon.fillStyle = "#272727";
-		text = vcon.measureText(input.value);
-		vcon.fillText(input.value,100,130+80,text.width)
-		ConReset(vcon);
-
-		if(isEscKey){
-			scene = SCENE_00_TITLE;
-		}
+		DrawText("left", "bold 40px  sans-serif", "#272727", input.value, 100, 360);
 	}else if(GameMode === GAMEMODE_02_KEY) {
 		vcon.textAlign = "left";
 		vcon.fillStyle = "#939494";
@@ -662,73 +674,7 @@ function G_Game_Draw(){
 		let text = con.measureText("'d'で戻る         ");
 		vcon.fillText("'d'で戻る",100,50,text.width);
 
-		vcon.fillStyle = "#272727";
-		vcon.textAlign = "center";
-		vcon.font = "bold 40px sans-serif";
-
-		for(let x = 0; x < 11; x++) {
-			vcon.fillStyle = "#252526";
-			vcon.fillRect(30 + x * 32,175,30,30);
-
-			if(key.toLocaleLowerCase() === keynames[0][x]){
-				vcon.font = "bold 15px sans-serif";
-				vcon.fillStyle = "#ff5";
-			}else{
-				vcon.font = "normal 15px sans-serif";
-				vcon.fillStyle = "#eee";
-			}
-
-			let text = con.measureText(keynames[0][x]);
-			vcon.fillText(keynames[0][x],30 + x * 32 + 15,175 + 15 + text.actualBoundingBoxAscent / 2,30,30);
-		}
-
-		for(let x = 0; x < 10; x++) {
-			vcon.fillStyle = "#252526";
-			vcon.fillRect(40 + x * 32,175 + 32 * 1 ,30,30);
-
-			if(key.toLocaleLowerCase() === keynames[1][x]){
-				vcon.font = "bold 15px sans-serif";
-				vcon.fillStyle = "#ff5";
-			}else{
-				vcon.font = "normal 15px sans-serif";
-				vcon.fillStyle = "#eee";
-			}
-			let text = con.measureText(keynames[1][x]);
-			vcon.fillText(keynames[1][x],40 + x * 32 + 15,175 + 32 * 1 + 15 + text.actualBoundingBoxAscent / 2,30,30);
-		}
-
-		for(let x = 0; x < 9; x++) {
-			vcon.fillStyle = "#252526";
-			vcon.fillRect(50 + x * 32,175 + 32 * 2 ,30,30);
-
-			if(key.toLocaleLowerCase() === keynames[2][x]){
-				vcon.font = "bold 15px sans-serif";
-				vcon.fillStyle = "#ff5";
-			}else{
-				vcon.font = "normal 15px sans-serif";
-				vcon.fillStyle = "#eee";
-			}
-
-			let text = con.measureText(keynames[2][x]);
-			vcon.fillText(keynames[2][x],50 + x * 32 + 15,175 + 32 * 2 + 15 + text.actualBoundingBoxAscent / 2,30,30);
-		}
-
-		for(let x = 0; x < 7; x++) {
-			vcon.fillStyle = "#252526";
-			vcon.fillRect(62 + x * 32,175 + 32 * 3 ,30,30);
-
-			if(key.toLocaleLowerCase() === keynames[3][x]){
-				vcon.font = "bold 15px sans-serif";
-				vcon.fillStyle = "#ff5";
-			}else{
-				vcon.font = "normal 15px sans-serif";
-				vcon.fillStyle = "#eee";
-			}
-
-			let text = con.measureText(keynames[3][x]);
-			vcon.fillStyle = "#eee";
-			vcon.fillText(keynames[3][x],62 + x * 32 + 15,175 + 32 * 3 + 15 + text.actualBoundingBoxAscent / 2,30,30);
-		}
+		DrawKeyboard();
 
 		if(input.value === "d"){
 			scene = SCENE_03_KEYSELECT;
@@ -740,8 +686,7 @@ function G_Game_Draw(){
 }
 
 function G_KeySelect_Draw() {
-    vcon.fillStyle = "#76c8f1";
-    vcon.fillRect(0, 0, VS_W, VS_H);
+	DrawBack();
 
 	vcon.font = "normal 15px sans-serif";
 	vcon.fillStyle = "#eee";
@@ -765,68 +710,8 @@ function G_KeySelect_Draw() {
 	vcon.fillRect(25,170,360,150)
 	vcon.font = "normal 15px sans-serif";
 
-	for(let x = 0; x < 11; x++) {
-		vcon.fillStyle = "#252526";
-		vcon.fillRect(30 + x * 32,175,30,30);
-
-		if(input.value.toLocaleLowerCase() === keynames[0][x]){
-			vcon.font = "bold 15px sans-serif";
-			vcon.fillStyle = "#ff5";
-		}else{
-			vcon.font = "normal 15px sans-serif";
-			vcon.fillStyle = "#eee";
-		}
-
-		let text = con.measureText(keynames[0][x]);
-		vcon.fillText(keynames[0][x],30 + x * 32 + 15,175 + 15 + text.actualBoundingBoxAscent / 2,30,30);
-	}
-
-	for(let x = 0; x < 10; x++) {
-		vcon.fillStyle = "#252526";
-		vcon.fillRect(40 + x * 32,175 + 32 * 1 ,30,30);
-
-		if(input.value.toLocaleLowerCase() === keynames[1][x]){
-			vcon.font = "bold 15px sans-serif";
-			vcon.fillStyle = "#ff5";
-		}else{
-			vcon.font = "normal 15px sans-serif";
-			vcon.fillStyle = "#eee";
-		}
-		let text = con.measureText(keynames[1][x]);
-		vcon.fillText(keynames[1][x],40 + x * 32 + 15,175 + 32 * 1 + 15 + text.actualBoundingBoxAscent / 2,30,30);
-	}
-
-	for(let x = 0; x < 9; x++) {
-		vcon.fillStyle = "#252526";
-		vcon.fillRect(50 + x * 32,175 + 32 * 2 ,30,30);
-
-		if(input.value.toLocaleLowerCase() === keynames[2][x]){
-			vcon.font = "bold 15px sans-serif";
-			vcon.fillStyle = "#ff5";
-		}else{
-			vcon.font = "normal 15px sans-serif";
-			vcon.fillStyle = "#eee";
-		}
-
-		let text = con.measureText(keynames[2][x]);
-		vcon.fillText(keynames[2][x],50 + x * 32 + 15,175 + 32 * 2 + 15 + text.actualBoundingBoxAscent / 2,30,30);
-	}
-
-	for(let x = 0; x < 7; x++) {
-		vcon.fillStyle = "#252526";
-		vcon.fillRect(62 + x * 32,175 + 32 * 3 ,30,30);
-
-		if(input.value.toLocaleLowerCase() === keynames[3][x]){
-			vcon.font = "bold 15px sans-serif";
-			vcon.fillStyle = "#ff5";
-		}else{
-			vcon.font = "normal 15px sans-serif";
-			vcon.fillStyle = "#eee";
-		}
-
-		let text = con.measureText(keynames[3][x]);
-		vcon.fillText(keynames[3][x],62 + x * 32 + 15,175 + 32 * 3 + 15 + text.actualBoundingBoxAscent / 2,30,30);
-	}
+	key = input.value;
+	DrawKeyboard();
 
 	if(isEnterKey && NextSceneFrame+20 < frame && input.value.length !== 0 && input.value !== "\n") {
 		scene = SCENE_02_GAME;
