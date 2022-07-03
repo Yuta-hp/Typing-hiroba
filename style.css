@@ -1,0 +1,9 @@
+body{
+    margin: 0;
+}
+
+textarea{
+    position: fixed;
+    top: -500px;
+    color: #272727;
+}
