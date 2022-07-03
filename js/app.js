@@ -4,6 +4,8 @@ let GamePlayerData = {
     ],
 }
 
+let version = "1.1";
+
 /**
  * ひらがなまたはカタカナからローマ字へ変換
  * @param {string} targetStr ローマ字へ変換する文字列（変換元の文字列）
@@ -304,6 +306,8 @@ function fisherYatesShuffle(arr){
 	return arr;
 }
 
+document.title = "タイピング 広場 version " + version;
+
 let GameSystemData = {
     Questions:[
         ["ピンク","pinnku"],
@@ -538,7 +542,7 @@ function G_Title_Draw() {
 
 	DrawBack();
 
-	DrawText("center", "bold 15px sans-serif", "#272727", "V1.0.0", 400,15);
+	DrawText("center", "bold 15px sans-serif", "#272727", "V " + version, 400,15);
 
 	DrawText("center", "bold 40px sans-serif", "#7548ef", "タイピング 広場", VS_W/2,100 + 120 + Math.sin((frame - 50) / 10) * 7)
 
@@ -557,6 +561,8 @@ function G_Menu_Draw() {
 
     if(isKeyAsText("w") && menu_index !== 0) resetInput(), menu_index--;
     if(isKeyAsText("s") && menu_index !== 2) resetInput(), menu_index++;
+
+	if(isKeyAsText("h") && menu_index !== 2) document.location.href = "./VersionHelp/index.html";
 
 	if(menu_index === GAMEMODE_00_ROME && isKeyAsText("\n")) {
 		resetInput();
@@ -587,7 +593,8 @@ function G_Menu_Draw() {
 
 	DrawText("left", "bold 28px sans-serif", "#272727", ">", 100 + Math.sin(frame / 10) * 8,170 + menu_index * 50 + Math.cos(frame / 10) * 2);
 
-	DrawText("left", "bold 28px sans-serif", "#272727", "'W'で↑、'S'で↓、'エンター'で決定", 130,100 + Math.cos(frame / 10) * 2);
+	DrawText("left", "bold 28px sans-serif", "#272727", "'W'で↑,'S'で↓,'エンター'で決定", 130,100 + Math.cos(frame / 10) * 2);
+	DrawText("left", "bold 28px sans-serif", "#272727", "'H'でヘルプを開く", 130,50 + Math.cos(frame / 10) * 2);
 }
 
 function G_Game_Draw(){
