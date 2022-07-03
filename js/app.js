@@ -369,6 +369,7 @@ let GameSystemData = {
 }
 
 GameSystemData.Questions = fisherYatesShuffle(GameSystemData.Questions);
+GameSystemData.Questions.length = 10;
 
 const vcan = document.createElement("canvas");
 const vcon = vcan.getContext("2d");
