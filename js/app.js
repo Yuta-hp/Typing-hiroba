@@ -459,7 +459,7 @@ function G_Init() {
 }
 
 function DrawBack() {
-    vcon.fillStyle = "#76c8f1";
+    vcon.fillStyle = "#4698dc";
     vcon.fillRect(0, 0, VS_W, VS_H);
 }
 
@@ -480,7 +480,7 @@ function DrawRect(x,y,w,h,color) {
 
 function isInputKey(x, y) {
 	if(key.toLocaleLowerCase() === keynames[y][x]) {
-		return ["bold 15px sans-serif", "#ff5"];
+		return ["bold 15px sans-serif", "#fa0"];
 	}else{
 		return ["normal 15px sans-serif", "#eee"];
 	}
@@ -499,7 +499,6 @@ function DrawKeyboardLine(len, addX, line) {
 function DrawKeyboard() {
 	DrawRect(25, 170, 360, 150, "#939494");
 
-	DrawText("left", "normal 15px sans-serif", "#eee", "'d'で戻る", 100, 50);
 
 	DrawKeyboardLine(11,30,0);
 	DrawKeyboardLine(10,40,1);
@@ -539,11 +538,14 @@ function G_Title_Draw() {
 
 	DrawBack();
 
+	DrawText("center", "bold 15px sans-serif", "#272727", "V1.0.0", 400,15);
+
 	DrawText("center", "bold 40px sans-serif", "#7548ef", "タイピング 広場", VS_W/2,100 + 120 + Math.sin((frame - 50) / 10) * 7)
 
 	DrawText("center", "bold 40px sans-serif", "#272727", "スペースキーを押してください", VS_W/2,VS_H/2 + 120 + Math.sin(frame / 10) * 10);
 
     if(isKeyAsText(" ")) resetInput(), changeScene(SCENE_01_MENU);
+    if(isKeyAsText("　")) resetInput(), alert("半角にしてください");
 
 	resetInput();
 }
@@ -670,9 +672,7 @@ function G_Game_Draw(){
 		vcon.fillRect(25,170,360,150)
 		vcon.font = "normal 15px sans-serif";
 
-		vcon.fillStyle = "#eee";
-		let text = con.measureText("'d'で戻る         ");
-		vcon.fillText("'d'で戻る",100,50,text.width);
+		DrawText("left", "normal 15px sans-serif", "#eee", "'d'で戻る", 100, 50);
 
 		DrawKeyboard();
 

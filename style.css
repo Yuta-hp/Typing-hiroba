@@ -5,4 +5,5 @@ body{
 textarea{
     position: fixed;
     top: -500px;
+    color: #4698dc;
 }
