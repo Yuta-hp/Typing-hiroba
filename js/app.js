@@ -385,13 +385,20 @@ const VS_W = 800;
 const VS_H = 500;
 
 const SCENE_00_TITLE = 0;
-const SCENE_01_GAME = 1;
+const SCENE_01_MENU = 1;
+const SCENE_02_GAME = 2;
 
+let menu_index = 0;
 let q_index = 0;
 
 let scene = SCENE_00_TITLE;
 
 let frame = 0;
+
+const GAMEMODE_00_ROME = 0;
+const GAMEMODE_01_KANA = 1;
+
+let GameMode = -1;
 
 function G_Data_Save() {
     
@@ -408,10 +415,10 @@ function G_Loop() {
         case SCENE_00_TITLE:
             G_Title_Draw();
             break;
-        // case SCENE_01_MENU:
-        //     G_Menu_Draw();
-        //     break;
-        case SCENE_01_GAME:
+        case SCENE_01_MENU:
+            G_Menu_Draw();
+            break;
+        case SCENE_02_GAME:
             G_Game_Draw();
             break;
     }
@@ -447,72 +454,172 @@ function ConReset(con) {
 function G_Title_Draw() {
     q_index = 0;
 
-    vcon.fillStyle = "#93dbf3";
+    vcon.fillStyle = "#76c8f1";
     vcon.fillRect(0, 0, VS_W, VS_H);
+
+    vcon.textAlign = "center";
+    vcon.font = "bold 40px sans-serif";
+    vcon.fillStyle = "#7548ef";
+
+    let text = vcon.measureText("タイピングゲーム");
+    vcon.fillText("タイピングゲーム",VS_W/2,100 + 120 + Math.sin((frame - 50) / 10) * 7,text.width)
 
     vcon.textAlign = "center";
     vcon.font = "bold 40px sans-serif";
     vcon.fillStyle = "#272727";
 
-    let text = vcon.measureText("スペースキーを押してください");
-    vcon.fillText("スペースキーを押してください",VS_W/2,VS_H/2 + 120,text.width)
+    text = vcon.measureText("スペースキーを押してください");
+    vcon.fillText("スペースキーを押してください",VS_W/2,VS_H/2 + 120 + Math.sin(frame / 10) * 10,text.width)
 
-    if(input.value === " ") input.value = "", scene = SCENE_01_GAME;
+    if(input.value === " ") input.value = "", scene++;
 
     input.value = ""
 
     ConReset(vcon);
 }
 
+function G_Menu_Draw() {
+    q_index = 0;
+
+    vcon.fillStyle = "#76c8f1";
+    vcon.fillRect(0, 0, VS_W, VS_H);
+
+    vcon.textAlign = "left";
+    vcon.font = "bold 28px sans-serif";
+    vcon.fillStyle = "#272727";
+
+    if(input.value === "w" && menu_index !== 0) input.value = "", menu_index--;
+    if(input.value === "s" && menu_index !== 1) input.value = "", menu_index++;
+
+	if(menu_index === 0 && input.value === "\n") {
+		input.value = "";
+		scene = SCENE_02_GAME;
+		GameMode = GAMEMODE_00_ROME;
+		return;
+	}
+
+	if(menu_index === 1 && input.value === "\n") {
+		input.value = "";
+		scene = SCENE_02_GAME;
+		GameMode = GAMEMODE_01_KANA;
+		return;
+	}
+
+    input.value = ""
+
+    let text = vcon.measureText("ローマ字モード");
+    vcon.fillText("ローマ字モード",130,170 + Math.cos(frame / 10) * 2,text.width)
+
+	text = vcon.measureText("かなモード");
+    vcon.fillText("かなモード",130,220 + Math.cos(frame / 10) * 2,text.width)
+
+	text = vcon.measureText(">");
+	vcon.fillText(">",100 + Math.sin(frame / 10) * 8,170 + menu_index * 50 + Math.cos(frame / 10) * 2,text.width)
+
+	text = vcon.measureText("'W'で↑、'S'で↓、'エンター'で決定");
+    vcon.fillText("'W'で↑、'S'で↓、エンターで決定",130,100 + Math.cos(frame / 10) * 2,text.width)
+
+    ConReset(vcon);
+}
+
 function G_Game_Draw(){
-    vcon.fillStyle = "#93dbf3";
+    vcon.fillStyle = "#76c8f1";
     vcon.fillRect(0, 0, VS_W, VS_H);
 
     vcon.textAlign = "left";
     vcon.font = "bold 40px sans-serif";
     vcon.fillStyle = "#272727";
 
-    if(GameSystemData.Questions[q_index][1] === input.value){
-        input.value = "";
-        q_index++;
-        if(q_index === GameSystemData.Questions.length) {
-            alert("終了しました");
-            scene = SCENE_00_TITLE;
-            return;
-        }
-    }
+	if(GameMode === 0) {
+		if(GameSystemData.Questions[q_index][1] === input.value){
+			input.value = "";
+			q_index++;
+			if(q_index === GameSystemData.Questions.length) {
+				alert("終了しました");
+				scene = SCENE_00_TITLE;
+				return;
+			}
+		}
 
-    text = vcon.measureText(GameSystemData.Questions[q_index][0]);
-    vcon.fillText(GameSystemData.Questions[q_index][0],100,80,text.width)
-    ConReset(vcon);
+		text = vcon.measureText(GameSystemData.Questions[q_index][0]);
+		vcon.fillText(GameSystemData.Questions[q_index][0],100,80,text.width)
+		ConReset(vcon);
+		let rometext = GameSystemData.Questions[q_index][1].split("");
+		let inputtext = input.value.split("");
+		let romewidth = 0;
 
-    let rometext = GameSystemData.Questions[q_index][1].split("");
-    let inputtext = input.value.split("");
-    let romewidth = 0;
+		for(let i = 0; i < rometext.length; i++)
+		{
+			if(inputtext.length > i && inputtext[i] === rometext[i]){
+				vcon.fillStyle = "#16a";
+			}else if(inputtext.length > i){
+				vcon.fillStyle = "#a16";
+			}else{
+				vcon.fillStyle = "#272727";
+			}
 
-    for(let i = 0; i < rometext.length; i++)
-    {
-        if(inputtext.length > i && inputtext[i] === rometext[i]){
-            vcon.fillStyle = "#16a";
-        }else if(inputtext.length > i){
-            vcon.fillStyle = "#a16";
-        }else{
-            vcon.fillStyle = "#272727";
-        }
-        
-        text = vcon.measureText(rometext[i]);
-        vcon.fillText(rometext[i],romewidth + 100,40+80,text.width)
-        ConReset(vcon);
-        romewidth += text.width;
-    }
+			text = vcon.measureText(rometext[i]);
+			vcon.fillText(rometext[i],romewidth + 100,40+80,text.width)
+			ConReset(vcon);
+			romewidth += text.width;
+		}
+	}else{
+		if(GameSystemData.Questions[q_index][0] + "\n" === input.value && isEnterKey){
+			input.value = "";
+			q_index++;
+			if(q_index === GameSystemData.Questions.length) {
+				alert("終了しました");
+				scene = SCENE_00_TITLE;
+				return;
+			}
+		}
+
+		text = vcon.measureText(GameSystemData.Questions[q_index][1]);
+		vcon.fillText(GameSystemData.Questions[q_index][1],100,120,text.width)
+
+		let kanatext = GameSystemData.Questions[q_index][0].split("");
+		let inputtext = input.value.split("");
+		let kanawidth = 0;
+
+		for(let i = 0; i < kanatext.length; i++)
+		{
+			if(inputtext.length > i && inputtext[i] === kanatext[i]){
+				vcon.fillStyle = "#16a";
+			}else if(inputtext.length > i){
+				vcon.fillStyle = "#a16";
+			}else{
+				vcon.fillStyle = "#272727";
+			}
+
+			text = vcon.measureText(kanatext[i]);
+			vcon.fillText(kanatext[i],kanawidth + 100,80,text.width)
+			ConReset(vcon);
+			kanawidth += text.width;
+		}
+	}
+
     vcon.fillStyle = "#272727";
     text = vcon.measureText(input.value);
     vcon.fillText(input.value,100,130+80,text.width)
     ConReset(vcon);
 }
 
+let isEnterKey = false;
+
 G_Init();
 
 input.onblur = () => {
     input.focus();
+}
+
+input.onkeydown = (e) => {
+	if(e.key === "Enter") {
+		isEnterKey = true;
+	}
+}
+
+input.onkeyup = (e) => {
+	if(e.key === "Enter") {
+		isEnterKey = false;
+	}
 }
