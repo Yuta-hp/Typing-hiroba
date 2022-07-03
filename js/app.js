@@ -4,7 +4,7 @@ let GamePlayerData = {
     ],
 }
 
-let version = "1.1";
+let version = "2.0";
 
 /**
  * ひらがなまたはカタカナからローマ字へ変換
@@ -490,24 +490,46 @@ function isInputKey(x, y) {
 	}
 }
 
-function DrawKeyboardLine(len, addX, line) {
+function DrawKeyboardLine(len, addX, line,f) {
+	let ax;
+	let ay;
+
+	if(f){
+		ax = vcan.width / 2 - 360 / 2;
+		ay = 130;
+	}else{
+		ax = 0;
+		ay = 0;
+	}
+
 	for(let x = 0; x < len; x++) {
-		DrawRect(addX + x * 32,175 + 32 * line,30,30, "#252526");
+		DrawRect(addX + x * 32 + ax,175 + 32 * line + ay,30,30, "#252526");
 
 		let font = isInputKey(x,line);
 
-		DrawText("center", font[0], font[1], keynames[line][x], addX + x * 32 + 15,175 + 32 * line + 18)
+		DrawText("center", font[0], font[1], keynames[line][x], addX + x * 32 + 15 + ax,175 + 32 * line + 18 + ay)
 	}
 }
 
-function DrawKeyboard() {
-	DrawRect(25, 170, 360, 150, "#939494");
+function DrawKeyboard(f) {
+	let ax;
+	let ay;
+
+	if(f){
+		ax = vcan.width / 2 - 360 / 2;
+		ay = 130;
+	}else{
+		ax = 0;
+		ay = 0;
+	}
+
+	DrawRect(25 + ax, 170 + ay, 360, 150, "#939494");
 
 
-	DrawKeyboardLine(11,30,0);
-	DrawKeyboardLine(10,40,1);
-	DrawKeyboardLine(9,50,2);
-	DrawKeyboardLine(7,62,3);
+	DrawKeyboardLine(11,30,0,f);
+	DrawKeyboardLine(10,40,1,f);
+	DrawKeyboardLine(9,50,2,f);
+	DrawKeyboardLine(7,62,3,f);
 }
 
 function nowQuestion() {
@@ -634,10 +656,20 @@ function G_Game_Draw(){
 				color = "#272727";
 			}
 
-			romewidth += DrawText("left", "bold 40px  sans-serif", color, rometext[i], romewidth + 100, 120).width;
+			romewidth += DrawText("left", "bold 40px sans-serif", color, rometext[i], romewidth + 100, 120).width;
 		}
 
-		DrawText("left", "bold 40px  sans-serif", "#272727", input.value, 100,360);
+		DrawText("left", "bold 40px sans-serif", "#272727", input.value, 100,200);
+
+
+		if(inputtext.length <= rometext.length - 1) {
+			key = rometext[inputtext.length];
+		}else{
+			key = " ";
+		}
+
+
+		DrawKeyboard(true);
 	}else if(GameMode === GAMEMODE_01_KANA){
 		if(GameSystemData.Questions[q_index][0] + "\n" === input.value && isEnterKey){
 			input.value = "";
@@ -672,7 +704,7 @@ function G_Game_Draw(){
 			kanawidth += DrawText("left", "bold 40px  sans-serif", color, kanatext[i], kanawidth + 100, 80).width;
 		}
 
-		DrawText("left", "bold 40px  sans-serif", "#272727", input.value, 100, 360);
+		DrawText("left", "bold 40px  sans-serif", "#272727", input.value, 100, 200);
 	}else if(GameMode === GAMEMODE_02_KEY) {
 		vcon.textAlign = "left";
 		vcon.fillStyle = "#939494";
@@ -681,7 +713,7 @@ function G_Game_Draw(){
 
 		DrawText("left", "normal 15px sans-serif", "#eee", "'d'で戻る", 100, 50);
 
-		DrawKeyboard();
+		DrawKeyboard(false);
 
 		if(input.value === "d"){
 			scene = SCENE_03_KEYSELECT;
@@ -718,7 +750,7 @@ function G_KeySelect_Draw() {
 	vcon.font = "normal 15px sans-serif";
 
 	key = input.value;
-	DrawKeyboard();
+	DrawKeyboard(false);
 
 	if(isEnterKey && NextSceneFrame+20 < frame && input.value.length !== 0 && input.value !== "\n") {
 		scene = SCENE_02_GAME;
