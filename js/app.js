@@ -291,6 +291,10 @@ var kanaToRoman = function(targetStr, type, options) {
 	return result;
 };
 
+const isUpperCase = c => {
+	return /^[A-Z]+$/g.test(c)
+}
+
 function fisherYatesShuffle(arr){
     for(var i =arr.length-1 ; i>0 ;i--){
         var j = Math.floor( Math.random() * (i + 1) ); //random index
@@ -387,26 +391,33 @@ const VS_H = 500;
 const SCENE_00_TITLE = 0;
 const SCENE_01_MENU = 1;
 const SCENE_02_GAME = 2;
+const SCENE_03_KEYSELECT = 3;
 
 let menu_index = 0;
 let q_index = 0;
 
 let scene = SCENE_00_TITLE;
 
+let keynames = [
+	["1","2","3","4","5","6","7","8","9","0","-"],
+	["q","w","e","r","t","y","u","i","o","p"],
+	["a","s","d","f","g","h","j","k","l"],
+	["z","x","c","v","b","n","m"],
+]
+
 let frame = 0;
+let key = "";
+let beforeKey = "";
+let NextSceneFrame = 0;
+
+let isOkShow = false;
+let isOkFrame = -1;
 
 const GAMEMODE_00_ROME = 0;
 const GAMEMODE_01_KANA = 1;
+const GAMEMODE_02_KEY = 2;
 
 let GameMode = -1;
-
-function G_Data_Save() {
-    
-}
-
-function G_Data_Load() {
-    
-}
 
 function G_Loop() {
     vcon.clearRect(0, 0, 500, 300);
@@ -421,6 +432,9 @@ function G_Loop() {
         case SCENE_02_GAME:
             G_Game_Draw();
             break;
+		case SCENE_03_KEYSELECT:
+            G_KeySelect_Draw();
+			break;
     }
 
     con.drawImage(vcan, 0, 0, VS_W, VS_H, 0, 0, can.width, can.height);
@@ -430,7 +444,7 @@ function G_Loop() {
 }
 
 function G_Init() {
-    let ScreenSize = innerHeight/VS_H - 0.1;
+    let ScreenSize = innerHeight/VS_H - 0.05;
 
     can.width = VS_W*ScreenSize;
     can.height = VS_H*ScreenSize;
@@ -461,8 +475,8 @@ function G_Title_Draw() {
     vcon.font = "bold 40px sans-serif";
     vcon.fillStyle = "#7548ef";
 
-    let text = vcon.measureText("タイピングゲーム");
-    vcon.fillText("タイピングゲーム",VS_W/2,100 + 120 + Math.sin((frame - 50) / 10) * 7,text.width)
+    let text = vcon.measureText("タイピング 広場");
+    vcon.fillText("タイピング 広場",VS_W/2,100 + 120 + Math.sin((frame - 50) / 10) * 7,text.width)
 
     vcon.textAlign = "center";
     vcon.font = "bold 40px sans-serif";
@@ -489,19 +503,27 @@ function G_Menu_Draw() {
     vcon.fillStyle = "#272727";
 
     if(input.value === "w" && menu_index !== 0) input.value = "", menu_index--;
-    if(input.value === "s" && menu_index !== 1) input.value = "", menu_index++;
+    if(input.value === "s" && menu_index !== 2) input.value = "", menu_index++;
 
-	if(menu_index === 0 && input.value === "\n") {
+	if(menu_index === GAMEMODE_00_ROME && input.value === "\n") {
 		input.value = "";
 		scene = SCENE_02_GAME;
 		GameMode = GAMEMODE_00_ROME;
 		return;
 	}
 
-	if(menu_index === 1 && input.value === "\n") {
+	if(menu_index === GAMEMODE_01_KANA && input.value === "\n") {
 		input.value = "";
 		scene = SCENE_02_GAME;
 		GameMode = GAMEMODE_01_KANA;
+		return;
+	}
+
+	if(menu_index === GAMEMODE_02_KEY && input.value === "\n") {
+		input.value = "";
+		scene = SCENE_03_KEYSELECT;
+		GameMode = GAMEMODE_02_KEY;
+		NextSceneFrame = frame;
 		return;
 	}
 
@@ -512,6 +534,9 @@ function G_Menu_Draw() {
 
 	text = vcon.measureText("かなモード");
     vcon.fillText("かなモード",130,220 + Math.cos(frame / 10) * 2,text.width)
+
+	text = vcon.measureText("キーの場所");
+    vcon.fillText("キーの場所",130,270 + Math.cos(frame / 10) * 2,text.width)
 
 	text = vcon.measureText(">");
 	vcon.fillText(">",100 + Math.sin(frame / 10) * 8,170 + menu_index * 50 + Math.cos(frame / 10) * 2,text.width)
@@ -530,7 +555,7 @@ function G_Game_Draw(){
     vcon.font = "bold 40px sans-serif";
     vcon.fillStyle = "#272727";
 
-	if(GameMode === 0) {
+	if(GameMode === GAMEMODE_00_ROME) {
 		if(GameSystemData.Questions[q_index][1] === input.value){
 			input.value = "";
 			q_index++;
@@ -540,6 +565,14 @@ function G_Game_Draw(){
 				return;
 			}
 		}
+
+		vcon.font = "normal 15px sans-serif";
+		vcon.fillStyle = "#eee";
+		let text = con.measureText("'esc'で終了         ");
+		vcon.fillText("'esc'で終了",100,30,text.width);
+
+		vcon.fillStyle = "#272727";
+		vcon.font = "bold 40px  sans-serif";
 
 		text = vcon.measureText(GameSystemData.Questions[q_index][0]);
 		vcon.fillText(GameSystemData.Questions[q_index][0],100,80,text.width)
@@ -563,7 +596,16 @@ function G_Game_Draw(){
 			ConReset(vcon);
 			romewidth += text.width;
 		}
-	}else{
+
+		vcon.fillStyle = "#272727";
+		text = vcon.measureText(input.value);
+		vcon.fillText(input.value,100,130+80,text.width)
+		ConReset(vcon);
+
+		if(isEscKey){
+			scene = SCENE_00_TITLE;
+		}
+	}else if(GameMode === GAMEMODE_01_KANA){
 		if(GameSystemData.Questions[q_index][0] + "\n" === input.value && isEnterKey){
 			input.value = "";
 			q_index++;
@@ -573,6 +615,11 @@ function G_Game_Draw(){
 				return;
 			}
 		}
+
+		vcon.font = "normal 15px sans-serif";
+		vcon.fillStyle = "#eee";
+		let text = con.measureText("'esc'で終了         ");
+		vcon.fillText("'esc'で終了",100,30,text.width);
 
 		text = vcon.measureText(GameSystemData.Questions[q_index][1]);
 		vcon.fillText(GameSystemData.Questions[q_index][1],100,120,text.width)
@@ -596,15 +643,205 @@ function G_Game_Draw(){
 			ConReset(vcon);
 			kanawidth += text.width;
 		}
+
+		vcon.fillStyle = "#272727";
+		text = vcon.measureText(input.value);
+		vcon.fillText(input.value,100,130+80,text.width)
+		ConReset(vcon);
+
+		if(isEscKey){
+			scene = SCENE_00_TITLE;
+		}
+	}else if(GameMode === GAMEMODE_02_KEY) {
+		vcon.textAlign = "left";
+		vcon.fillStyle = "#939494";
+		vcon.fillRect(25,170,360,150)
+		vcon.font = "normal 15px sans-serif";
+
+		vcon.fillStyle = "#eee";
+		let text = con.measureText("'d'で戻る         ");
+		vcon.fillText("'d'で戻る",100,50,text.width);
+
+		vcon.fillStyle = "#272727";
+		vcon.textAlign = "center";
+		vcon.font = "bold 40px sans-serif";
+
+		for(let x = 0; x < 11; x++) {
+			vcon.fillStyle = "#252526";
+			vcon.fillRect(30 + x * 32,175,30,30);
+
+			if(key.toLocaleLowerCase() === keynames[0][x]){
+				vcon.font = "bold 15px sans-serif";
+				vcon.fillStyle = "#ff5";
+			}else{
+				vcon.font = "normal 15px sans-serif";
+				vcon.fillStyle = "#eee";
+			}
+
+			let text = con.measureText(keynames[0][x]);
+			vcon.fillText(keynames[0][x],30 + x * 32 + 15,175 + 15 + text.actualBoundingBoxAscent / 2,30,30);
+		}
+
+		for(let x = 0; x < 10; x++) {
+			vcon.fillStyle = "#252526";
+			vcon.fillRect(40 + x * 32,175 + 32 * 1 ,30,30);
+
+			if(key.toLocaleLowerCase() === keynames[1][x]){
+				vcon.font = "bold 15px sans-serif";
+				vcon.fillStyle = "#ff5";
+			}else{
+				vcon.font = "normal 15px sans-serif";
+				vcon.fillStyle = "#eee";
+			}
+			let text = con.measureText(keynames[1][x]);
+			vcon.fillText(keynames[1][x],40 + x * 32 + 15,175 + 32 * 1 + 15 + text.actualBoundingBoxAscent / 2,30,30);
+		}
+
+		for(let x = 0; x < 9; x++) {
+			vcon.fillStyle = "#252526";
+			vcon.fillRect(50 + x * 32,175 + 32 * 2 ,30,30);
+
+			if(key.toLocaleLowerCase() === keynames[2][x]){
+				vcon.font = "bold 15px sans-serif";
+				vcon.fillStyle = "#ff5";
+			}else{
+				vcon.font = "normal 15px sans-serif";
+				vcon.fillStyle = "#eee";
+			}
+
+			let text = con.measureText(keynames[2][x]);
+			vcon.fillText(keynames[2][x],50 + x * 32 + 15,175 + 32 * 2 + 15 + text.actualBoundingBoxAscent / 2,30,30);
+		}
+
+		for(let x = 0; x < 7; x++) {
+			vcon.fillStyle = "#252526";
+			vcon.fillRect(62 + x * 32,175 + 32 * 3 ,30,30);
+
+			if(key.toLocaleLowerCase() === keynames[3][x]){
+				vcon.font = "bold 15px sans-serif";
+				vcon.fillStyle = "#ff5";
+			}else{
+				vcon.font = "normal 15px sans-serif";
+				vcon.fillStyle = "#eee";
+			}
+
+			let text = con.measureText(keynames[3][x]);
+			vcon.fillStyle = "#eee";
+			vcon.fillText(keynames[3][x],62 + x * 32 + 15,175 + 32 * 3 + 15 + text.actualBoundingBoxAscent / 2,30,30);
+		}
+
+		if(input.value === "d"){
+			scene = SCENE_03_KEYSELECT;
+			NextSceneFrame = 0;
+		}
+
+		input.value = "";
+	}
+}
+
+function G_KeySelect_Draw() {
+    vcon.fillStyle = "#76c8f1";
+    vcon.fillRect(0, 0, VS_W, VS_H);
+
+	vcon.font = "normal 15px sans-serif";
+	vcon.fillStyle = "#eee";
+	let text = con.measureText("'esc'で終了         ");
+	vcon.fillText("'esc'で終了",100,30,text.width);
+
+    vcon.textAlign = "left";
+    vcon.font = "bold 28px sans-serif";
+    vcon.fillStyle = "#272727";
+
+	if(input.value.length >= 2 && input.value[1] !== "\n") {
+		input.value = input.value[1];
 	}
 
-    vcon.fillStyle = "#272727";
-    text = vcon.measureText(input.value);
-    vcon.fillText(input.value,100,130+80,text.width)
-    ConReset(vcon);
+	text = vcon.measureText("位置を知りたいキーを押してください：" + input.value);
+    vcon.fillText("位置を知りたいキーを押してください：" + input.value,130,100 + Math.cos(frame / 10),text.width)
+
+	vcon.textAlign = "center";
+	vcon.fillStyle = "#939494";
+
+	vcon.fillRect(25,170,360,150)
+	vcon.font = "normal 15px sans-serif";
+
+	for(let x = 0; x < 11; x++) {
+		vcon.fillStyle = "#252526";
+		vcon.fillRect(30 + x * 32,175,30,30);
+
+		if(input.value.toLocaleLowerCase() === keynames[0][x]){
+			vcon.font = "bold 15px sans-serif";
+			vcon.fillStyle = "#ff5";
+		}else{
+			vcon.font = "normal 15px sans-serif";
+			vcon.fillStyle = "#eee";
+		}
+
+		let text = con.measureText(keynames[0][x]);
+		vcon.fillText(keynames[0][x],30 + x * 32 + 15,175 + 15 + text.actualBoundingBoxAscent / 2,30,30);
+	}
+
+	for(let x = 0; x < 10; x++) {
+		vcon.fillStyle = "#252526";
+		vcon.fillRect(40 + x * 32,175 + 32 * 1 ,30,30);
+
+		if(input.value.toLocaleLowerCase() === keynames[1][x]){
+			vcon.font = "bold 15px sans-serif";
+			vcon.fillStyle = "#ff5";
+		}else{
+			vcon.font = "normal 15px sans-serif";
+			vcon.fillStyle = "#eee";
+		}
+		let text = con.measureText(keynames[1][x]);
+		vcon.fillText(keynames[1][x],40 + x * 32 + 15,175 + 32 * 1 + 15 + text.actualBoundingBoxAscent / 2,30,30);
+	}
+
+	for(let x = 0; x < 9; x++) {
+		vcon.fillStyle = "#252526";
+		vcon.fillRect(50 + x * 32,175 + 32 * 2 ,30,30);
+
+		if(input.value.toLocaleLowerCase() === keynames[2][x]){
+			vcon.font = "bold 15px sans-serif";
+			vcon.fillStyle = "#ff5";
+		}else{
+			vcon.font = "normal 15px sans-serif";
+			vcon.fillStyle = "#eee";
+		}
+
+		let text = con.measureText(keynames[2][x]);
+		vcon.fillText(keynames[2][x],50 + x * 32 + 15,175 + 32 * 2 + 15 + text.actualBoundingBoxAscent / 2,30,30);
+	}
+
+	for(let x = 0; x < 7; x++) {
+		vcon.fillStyle = "#252526";
+		vcon.fillRect(62 + x * 32,175 + 32 * 3 ,30,30);
+
+		if(input.value.toLocaleLowerCase() === keynames[3][x]){
+			vcon.font = "bold 15px sans-serif";
+			vcon.fillStyle = "#ff5";
+		}else{
+			vcon.font = "normal 15px sans-serif";
+			vcon.fillStyle = "#eee";
+		}
+
+		let text = con.measureText(keynames[3][x]);
+		vcon.fillText(keynames[3][x],62 + x * 32 + 15,175 + 32 * 3 + 15 + text.actualBoundingBoxAscent / 2,30,30);
+	}
+
+	if(isEnterKey && NextSceneFrame+20 < frame && input.value.length !== 0 && input.value !== "\n") {
+		scene = SCENE_02_GAME;
+		key = input.value[0];
+		NextSceneFrame = 0;
+	}
+
+	if(isEscKey && NextSceneFrame+60 < frame ){
+		scene = SCENE_00_TITLE;
+		NextSceneFrame = 0;
+	}
 }
 
 let isEnterKey = false;
+let isEscKey = false;
 
 G_Init();
 
@@ -616,10 +853,16 @@ input.onkeydown = (e) => {
 	if(e.key === "Enter") {
 		isEnterKey = true;
 	}
+	if(e.key === "Escape") {
+		isEscKey = true;
+	}
 }
 
 input.onkeyup = (e) => {
 	if(e.key === "Enter") {
 		isEnterKey = false;
+	}
+	if(e.key === "Escape") {
+		isEscKey = false;
 	}
 }
