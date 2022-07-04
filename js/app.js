@@ -4,7 +4,7 @@ let GamePlayerData = {
     ],
 }
 
-let version = "2.0";
+let version = "2.1";
 
 /**
  * ひらがなまたはカタカナからローマ字へ変換
@@ -507,7 +507,7 @@ function DrawKeyboardLine(len, addX, line,f) {
 
 		let font = isInputKey(x,line);
 
-		DrawText("center", font[0], font[1], keynames[line][x], addX + x * 32 + 15 + ax,175 + 32 * line + 18 + ay)
+		DrawText("center", font[0], font[1], keynames[line][x].toLocaleUpperCase(), addX + x * 32 + 15 + ax,175 + 32 * line + 18 + ay)
 	}
 }
 
